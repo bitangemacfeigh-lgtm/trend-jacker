@@ -1,46 +1,56 @@
 import os
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
-from mistralai.client import Mistral
+from mistralai import Mistral # Corrected import for latest SDK
 from scout import get_global_trends, get_filtered_trends
 
 load_dotenv()
 app = Flask(__name__)
-client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
+
+# Initialize Mistral with the new SDK pattern
+api_key = os.getenv("MISTRAL_API_KEY")
+client = Mistral(api_key=api_key)
 
 def generate_strategy(trend, intent):
+    """Generates a viral strategy using Mistral AI."""
     prompt = f"""
     The user is interested in the trend: '{trend}'.
     Their intent is: {intent}.
     
     Provide a viral 3-step strategy to maximize this trend:
-    1. Content Hook (X/LinkedIn)
-    2. Strategic Action (What should they actually do/build?)
-    3. Monetization/Growth Hack (How do they profit from this?)
+    1. Content Hook (X/LinkedIn) - Give an exact opening line.
+    2. Strategic Action - What specific asset should they create?
+    3. Monetization/Growth Hack - How do they turn this into revenue or leads?
     
-    Keep the advice punchy and actionable.
+    Keep advice punchy, bold, and actionable.
     """
-    response = client.chat.complete(
-        model="mistral-large-latest",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    try:
+        response = client.chat.complete(
+            model="mistral-large-latest",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"AI Strategy is temporarily offline, but keep an eye on: {trend}!"
 
 @app.route('/')
 def home():
-    # Show global trends on the landing page
+    # Fetch global trends for the sidebar/header
     global_trends = get_global_trends()
     return render_template('index.html', global_trends=global_trends)
 
 @app.route('/scout')
 def scout():
-    # Get parameters from the frontend form
+    # 1. Get user inputs
     topic = request.args.get('topic', 'AI')
     geo = request.args.get('geo', '')
-    intent = request.args.get('intent', 'Brand Awareness')
-    timeframe = request.args.get('timeframe', 'now 1-d')
+    intent = request.args.get('intent', 'Thought Leadership')
+    timeframe = request.args.get('timeframe', 'now 7-d')
 
+    # 2. Get Trend Data (with fallback handling inside scout.py)
     trend_data = get_filtered_trends(topic, geo, timeframe)
+    
+    # 3. Generate AI Strategy based on the found (or fallback) trend
     advice = generate_strategy(trend_data['topic'], intent)
     
     return jsonify({
@@ -50,4 +60,6 @@ def scout():
     })
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    # Render uses the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
