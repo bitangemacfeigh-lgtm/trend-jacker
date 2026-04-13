@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trend-Jacker Scout</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; line-height: 1.6; background: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        pre { background: #eee; padding: 15px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🚀 Trend-Jacker Social Scout</h1>
+        <p>Current Niche: <strong>AI in Kenya</strong></p>
+        <button onclick="runScout()">Run Scout Now</button>
+        <div id="results" style="margin-top: 20px; display: none;">
+            <h3>🔥 Trend Detected: <span id="trend"></span></h3>
+            <h4>📝 Generated Content:</h4>
+            <pre id="content"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function runScout() {
+            const btn = document.querySelector('button');
+            btn.innerText = "Searching...";
+            const response = await fetch('/scout');
+            const data = await response.json();
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('trend').innerText = data.trend_found || "None";
+            document.getElementById('content').innerText = data.content || data.message;
+            btn.innerText = "Run Scout Now";
+        }
+    </script>
+</body>
+</html>

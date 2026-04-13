@@ -33,7 +33,7 @@ def generate_viral_content(topic, growth):
 
 @app.route('/')
 def home():
-    return "Trend-Jacker is Live. Visit /scout to trigger a scan."
+    return render_template('index.html')
 
 @app.route('/scout')
 def scout():
