@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
-from mistralai import Mistral # Corrected import for latest SDK
+from mistralai.client import Mistral
 from scout import get_global_trends, get_filtered_trends
 
 load_dotenv()
