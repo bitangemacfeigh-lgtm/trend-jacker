@@ -1,37 +1,29 @@
 import pandas as pd
 from pytrends.request import TrendReq
-import time
 
-def get_google_trends(niche="AI in Kenya"):
-    """Fetches trending related queries for a specific niche."""
-    print(f"🔍 Searching Google Trends for: {niche}...")
+def get_global_trends():
+    """Fetches daily trending searches globally."""
+    pytrends = TrendReq(hl='en-US', tz=360)
+    # Get trending searches for a major region (e.g., US or Global)
+    try:
+        df = pytrends.trending_searches(pn='united_states') # 'pn' is the country name
+        return df[0].head(10).tolist() # Returns top 10 trends
+    except:
+        return ["AI breakthroughs", "Tech layoffs", "Global Economic Shift"]
+
+def get_filtered_trends(topic, geo='', timeframe='now 1-d'):
+    """Advanced search based on user filters."""
     pytrends = TrendReq(hl='en-US', tz=360)
     
-    # Build payload
-    pytrends.build_payload([niche], cat=0, timeframe='now 1-d', geo='', gprop='')
+    # geo is the 2-letter country code (e.g., 'KE' for Kenya, 'US' for USA)
+    pytrends.build_payload([topic], cat=0, timeframe=timeframe, geo=geo)
     
-    # Get related queries
     related_queries = pytrends.related_queries()
+    rising = related_queries.get(topic, {}).get('rising')
     
-    # We look at 'rising' queries (those with % growth or 'Breakout')
-    rising_trends = related_queries.get(niche, {}).get('rising')
-    
-    if rising_trends is not None and not rising_trends.empty:
-        # Filter for 'Breakout' or high percentage
-        top_trend = rising_trends.iloc[0]['query']
-        value = rising_trends.iloc[0]['value']
-        return {"topic": top_trend, "growth": value}
-    
-    return None
-
-def scout_all_sources(niche):
-    """Aggregates trends from multiple sources."""
-    # Phase 2 focus: Google Trends
-    g_trend = get_google_trends(niche)
-    
-    if g_trend:
-        print(f"🔥 Found Spike: '{g_trend['topic']}' (Growth: {g_trend['growth']})")
-        return g_trend
-    else:
-        print("Cooling down... no major spikes detected.")
-        return None
+    if rising is not None and not rising.empty:
+        return {
+            "topic": rising.iloc[0]['query'],
+            "growth": rising.iloc[0]['value']
+        }
+    return {"topic": topic, "growth": "Steady Interest"}

@@ -1,36 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Trend-Jacker Scout</title>
+    <title>Trend-Jacker Pro</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; line-height: 1.6; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        pre { background: #eee; padding: 15px; white-space: pre-wrap; word-wrap: break-word; }
+        body { font-family: 'Inter', sans-serif; display: flex; background: #f0f2f5; margin: 0; }
+        .sidebar { width: 250px; background: #fff; height: 100vh; padding: 20px; border-right: 1px solid #ddd; }
+        .main { flex: 1; padding: 40px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        button { background: #1a73e8; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; cursor: pointer; }
+        pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🚀 Trend-Jacker Social Scout</h1>
-        <p>Current Niche: <strong>AI in Kenya</strong></p>
-        <button onclick="runScout()">Run Scout Now</button>
-        <div id="results" style="margin-top: 20px; display: none;">
-            <h3>🔥 Trend Detected: <span id="trend"></span></h3>
-            <h4>📝 Generated Content:</h4>
-            <pre id="content"></pre>
+    <div class="sidebar">
+        <h3>🌍 World Trends</h3>
+        <ul>
+            {% for trend in global_trends %}
+            <li>{{ trend }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h1>🚀 Trend-Jacker Pro</h1>
+            <div class="input-group">
+                <label>Niche/Topic</label>
+                <input type="text" id="topic" placeholder="e.g. AI in Kenya">
+            </div>
+            <div class="input-group">
+                <label>Location (2-letter code)</label>
+                <input type="text" id="geo" placeholder="KE, US, GB (Blank for Global)">
+            </div>
+            <div class="input-group">
+                <label>Your Intent</label>
+                <select id="intent">
+                    <option value="Thought Leadership">Thought Leadership</option>
+                    <option value="Lead Generation">Lead Generation</option>
+                    <option value="Product Launch">Product Launch</option>
+                </select>
+            </div>
+            <button onclick="runScout()">Deep Scout & Analyze</button>
+
+            <div id="results" style="margin-top: 30px; display: none;">
+                <h2>🔥 Analysis for: <span id="res_trend"></span></h2>
+                <pre id="res_advice"></pre>
+            </div>
         </div>
     </div>
 
     <script>
         async function runScout() {
+            const topic = document.getElementById('topic').value;
+            const geo = document.getElementById('geo').value;
+            const intent = document.getElementById('intent').value;
+            
             const btn = document.querySelector('button');
-            btn.innerText = "Searching...";
-            const response = await fetch('/scout');
+            btn.innerText = "Analyzing Trend...";
+            
+            const response = await fetch(`/scout?topic=${topic}&geo=${geo}&intent=${intent}`);
             const data = await response.json();
+            
             document.getElementById('results').style.display = 'block';
-            document.getElementById('trend').innerText = data.trend_found || "None";
-            document.getElementById('content').innerText = data.content || data.message;
-            btn.innerText = "Run Scout Now";
+            document.getElementById('res_trend').innerText = data.trend;
+            document.getElementById('res_advice').innerText = data.advice;
+            btn.innerText = "Deep Scout & Analyze";
         }
     </script>
 </body>

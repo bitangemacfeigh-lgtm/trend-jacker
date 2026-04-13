@@ -1,57 +1,53 @@
 import os
-import time
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
 from mistralai.client import Mistral
-from scout import get_google_trends
+from scout import get_global_trends, get_filtered_trends
 
-# Load environment variables
 load_dotenv()
-
 app = Flask(__name__)
+client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
-# Initialize Mistral
-api_key = os.getenv("MISTRAL_API_KEY")
-client = Mistral(api_key=api_key)
-
-def generate_viral_content(topic, growth):
+def generate_strategy(trend, intent):
     prompt = f"""
-    A new trend just broke out: '{topic}' with a growth metric of {growth}.
-    Target Audience: Brand Founders and Tech Enthusiasts.
+    The user is interested in the trend: '{trend}'.
+    Their intent is: {intent}.
     
-    1. Write a 5-part X (Twitter) thread. Start with a hook that mentions the sudden spike.
-    2. Write a LinkedIn 'Thought Leadership' post that explains the 'Why' behind this trend.
+    Provide a viral 3-step strategy to maximize this trend:
+    1. Content Hook (X/LinkedIn)
+    2. Strategic Action (What should they actually do/build?)
+    3. Monetization/Growth Hack (How do they profit from this?)
     
-    Keep it punchy, use emojis sparingly, and ensure it sounds human.
+    Keep the advice punchy and actionable.
     """
-    
-    chat_response = client.chat.complete(
+    response = client.chat.complete(
         model="mistral-large-latest",
         messages=[{"role": "user", "content": prompt}]
     )
-    return chat_response.choices[0].message.content
+    return response.choices[0].message.content
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # Show global trends on the landing page
+    global_trends = get_global_trends()
+    return render_template('index.html', global_trends=global_trends)
 
 @app.route('/scout')
 def scout():
-    NICHE = "AI in Kenya"
-    trend = get_google_trends(NICHE)
+    # Get parameters from the frontend form
+    topic = request.args.get('topic', 'AI')
+    geo = request.args.get('geo', '')
+    intent = request.args.get('intent', 'Brand Awareness')
+    timeframe = request.args.get('timeframe', 'now 1-d')
+
+    trend_data = get_filtered_trends(topic, geo, timeframe)
+    advice = generate_strategy(trend_data['topic'], intent)
     
-    if trend:
-        content = generate_viral_content(trend['topic'], trend['growth'])
-        return jsonify({
-            "status": "success",
-            "trend_found": trend['topic'],
-            "growth": trend['growth'],
-            "content": content
-        })
-    
-    return jsonify({"status": "idle", "message": "No spikes detected right now."})
+    return jsonify({
+        "trend": trend_data['topic'],
+        "growth": trend_data['growth'],
+        "advice": advice
+    })
 
 if __name__ == "__main__":
-    # For local testing
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
