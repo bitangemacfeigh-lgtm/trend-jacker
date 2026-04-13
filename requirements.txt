@@ -1,0 +1,6 @@
+mistralai 
+python-dotenv 
+pytrends 
+flask 
+gunicorn 
+pandas 
