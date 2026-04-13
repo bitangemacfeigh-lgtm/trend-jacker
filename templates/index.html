@@ -1,72 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trend-Jacker Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; display: flex; background: #f0f2f5; margin: 0; }
-        .sidebar { width: 250px; background: #fff; height: 100vh; padding: 20px; border-right: 1px solid #ddd; }
-        .main { flex: 1; padding: 40px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .input-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background: #1a73e8; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; cursor: pointer; }
-        pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; white-space: pre-wrap; }
+        body { background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .trend-card:hover { border-color: #38bdf8; transition: 0.3s; }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <h3>🌍 World Trends</h3>
-        <ul>
-            {% for trend in global_trends %}
-            <li>{{ trend }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                🚀 Trend-Jacker Pro
+            </h1>
+            <div class="text-sm text-slate-400">🌍 Global Trends Active</div>
+        </header>
 
-    <div class="main">
-        <div class="card">
-            <h1>🚀 Trend-Jacker Pro</h1>
-            <div class="input-group">
-                <label>Niche/Topic</label>
-                <input type="text" id="topic" placeholder="e.g. AI in Kenya">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass p-5 rounded-2xl h-fit">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-globe-americas mr-2 text-blue-400"></i> World Trends
+                </h3>
+                <ul class="space-y-3 text-slate-300">
+                    {% for trend in global_trends %}
+                    <li class="p-2 glass rounded-lg text-sm trend-card cursor-pointer" onclick="document.getElementById('topic').value='{{trend}}'">
+                        {{ trend }}
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
-            <div class="input-group">
-                <label>Location (2-letter code)</label>
-                <input type="text" id="geo" placeholder="KE, US, GB (Blank for Global)">
-            </div>
-            <div class="input-group">
-                <label>Your Intent</label>
-                <select id="intent">
-                    <option value="Thought Leadership">Thought Leadership</option>
-                    <option value="Lead Generation">Lead Generation</option>
-                    <option value="Product Launch">Product Launch</option>
-                </select>
-            </div>
-            <button onclick="runScout()">Deep Scout & Analyze</button>
 
-            <div id="results" style="margin-top: 30px; display: none;">
-                <h2>🔥 Analysis for: <span id="res_trend"></span></h2>
-                <pre id="res_advice"></pre>
+            <div class="md:col-span-2 space-y-6">
+                <div class="glass p-6 rounded-2xl">
+                    <div class="grid grid-cols-1 gap-4">
+                        <input type="text" id="topic" placeholder="Niche/Topic (e.g., Farming)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="geo" placeholder="Location (US, KE, GB)" class="bg-slate-900 border border-slate-700 rounded-xl p-3">
+                            <select id="intent" class="bg-slate-900 border border-slate-700 rounded-xl p-3">
+                                <option>Thought Leadership</option>
+                                <option>Lead Generation</option>
+                                <option>Product Launch</option>
+                            </select>
+                        </div>
+                        <button onclick="scoutTrend()" id="scoutBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition duration-200">
+                            Deep Scout & Analyze
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultArea" class="hidden glass p-6 rounded-2xl border-l-4 border-blue-500 relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span id="growthTag" class="text-xs font-bold uppercase px-2 py-1 bg-green-500/20 text-green-400 rounded-md">Rising</span>
+                            <h2 id="resultTrend" class="text-2xl font-bold mt-2"></h2>
+                        </div>
+                        <button onclick="copyAdvice()" class="text-slate-400 hover:text-white p-2">
+                            <i class="fas fa-copy text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="adviceContent" class="prose prose-invert max-w-none text-slate-300 whitespace-pre-line">
+                        </div>
+                </div>
+
+                <div id="loader" class="hidden text-center p-10">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-2"></div>
+                    <p class="text-slate-400">Analyzing Trend & Building Strategy...</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        async function runScout() {
+        async function scoutTrend() {
             const topic = document.getElementById('topic').value;
             const geo = document.getElementById('geo').value;
             const intent = document.getElementById('intent').value;
-            
-            const btn = document.querySelector('button');
-            btn.innerText = "Analyzing Trend...";
-            
-            const response = await fetch(`/scout?topic=${topic}&geo=${geo}&intent=${intent}`);
-            const data = await response.json();
-            
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('res_trend').innerText = data.trend;
-            document.getElementById('res_advice').innerText = data.advice;
-            btn.innerText = "Deep Scout & Analyze";
+            const btn = document.getElementById('scoutBtn');
+            const loader = document.getElementById('loader');
+            const resultArea = document.getElementById('resultArea');
+
+            if (!topic) return alert("Enter a topic first!");
+
+            // UI State
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+
+            try {
+                const response = await fetch(`/scout?topic=${topic}&geo=${geo}&intent=${intent}`);
+                const data = await response.json();
+
+                document.getElementById('resultTrend').innerText = data.trend;
+                document.getElementById('growthTag').innerText = data.growth;
+                document.getElementById('adviceContent').innerText = data.advice;
+                
+                resultArea.classList.remove('hidden');
+            } catch (error) {
+                alert("Error fetching data. Check server logs.");
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        }
+
+        function copyAdvice() {
+            const text = document.getElementById('adviceContent').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Strategy copied to clipboard!");
+            });
         }
     </script>
 </body>
